@@ -1,6 +1,5 @@
 import json, os, requests
 from fastapi import FastAPI, Request, Body
-from deta import Deta
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -41,6 +40,45 @@ db = {
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/po/{po_no}/{token}")
+async def po(po_no, token):    
+    reqUrl = "https://po-manu.harperdbcloud.com"
+
+    headersList = {
+        "Authorization": "Basic " + token,
+        "Content-Type": "application/json" 
+    }
+
+    payload_po = json.dumps({
+        "operation": "sql",
+        "sql": "SELECT * from po.first where PO_NUMBER='SM/" + po_no + "'" 
+    })
+
+    payload_products = json.dumps({
+        "operation": "sql",
+        "sql": "SELECT * from po.uuid where PO_NUMBER='SM/" + po_no + "'" 
+    })
+
+    pos = requests.request("POST", reqUrl, data=payload_po,  headers=headersList)
+    products = requests.request("POST", reqUrl, data=payload_products,  headers=headersList)
+
+    payload_party = json.dumps({
+        "operation": "sql",
+        "sql": "SELECT * from po.parties where PARTY='" + pos.json()[0].get('SUPPLIER') + "'" 
+    })
+    party = requests.request("POST", reqUrl, data=payload_party,  headers=headersList)
+
+    print(pos.json())
+
+    return {
+        "purchase_order": pos.json(),
+        "products" : products.json(),
+        "party" : party.json()
+    }
+
+    
+    #return {"msg" : po_no}
 
 @app.get("/store")
 async def store():

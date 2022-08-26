@@ -1,0 +1,1 @@
+{"id":"43c09b5a-a38d-42b0-90d6-916738a2a17e","space":23306,"runtime":"python3.9","name":"RESTv1","path":"av9e3i","project":"c0qm30mo","account":"144798365827","region":"ap-southeast-1","deps":["flask","uvicorn","requests","FastAPI"],"envs":["DETA_PROJECT_KEY","DETA_KEY","DETA_RUNTIME"],"public":false,"log_level":"debug","cron":""}
