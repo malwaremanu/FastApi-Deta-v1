@@ -3,6 +3,12 @@ from fastapi import FastAPI, Request, Body
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+
+import base64 
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad,unpad
+
+
 app = FastAPI()
 
 origins = [
@@ -106,10 +112,7 @@ async def po(po_no, token):
         return {
             "status" : "error",
             "msg" : "PO Not Found. Please enter Correct Details."
-        }
-        
-
-    
+        }        
     #return {"msg" : po_no}
 
 @app.post("/anju/{operation}")
@@ -143,7 +146,6 @@ async def anju(operation, payload = Body()):
          "data" : pos.json()
     }
 
-
 @app.get("/store")
 async def store():
     with open('data/db.json', 'w+') as db_file:
@@ -174,8 +176,41 @@ async def save(payload: dict = Body(...)):
 
     return {"message": "data saved successfully", "data" : db}
 
+@app.post('/enc')
+async def enc(payload: dict = Body(...)):
+    data = dict(payload)['data']
+    try:
+        key = "v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J"
+        raw = pad(str(data).encode(),16)
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_ECB)
+
+        return {
+            "data" : base64.b64encode(cipher.encrypt(raw)),
+            "status" : "success"
+        }
+    except:
+        return {
+            "status" : "error"
+        }
+    #return cipher    
 
 
+@app.post('/dec')
+async def dec(payload: dict = Body(...)):
+    msg = dict(payload)['data']
+    try:
+        key = "v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J"    
+        enc = base64.b64decode(msg)
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_ECB)
+        
+        return {
+            "data" : unpad(cipher.decrypt(enc),16),
+            "status" : "success"
+        }
+    except:
+        return {
+            "status" : "error"
+        }
 # deta = Deta('myProjectKey') # configure your Deta project
 # db = deta.Base('simpleDB')  # access your DB
 # app = Flask(__name__)
