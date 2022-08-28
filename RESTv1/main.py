@@ -4,11 +4,30 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 
-import base64 
+# --- ENCDEC START
+import base64, json
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad,unpad
 
+#AES ECB mode without IV
 
+data = str({
+    "data" : "i love coomputer science"
+})
+
+#key = 'QWERTASDFGZXCVB1' #Must Be 16 char for AES128
+key = "PoncU&*()/12345aPoncU&*()/12345a" #Must Be 32 char for AES256
+
+def encrypt(raw):
+        raw = pad(raw.encode(),16)
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_ECB)
+        return base64.b64encode(cipher.encrypt(raw)).decode("utf-8", "ignore")
+
+def decrypt(enc):
+        enc = base64.b64decode(enc)
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_ECB)
+        return json.loads(unpad(cipher.decrypt(enc),16).decode("utf-8", "ignore"))
+# --- ENCDEC END
 app = FastAPI()
 
 origins = [
@@ -194,7 +213,6 @@ async def enc(payload: dict = Body(...)):
         }
     #return cipher    
 
-
 @app.post('/dec')
 async def dec(payload: dict = Body(...)):
     msg = dict(payload)['data']
@@ -211,6 +229,20 @@ async def dec(payload: dict = Body(...)):
         return {
             "status" : "error"
         }
-# deta = Deta('myProjectKey') # configure your Deta project
-# db = deta.Base('simpleDB')  # access your DB
-# app = Flask(__name__)
+
+
+@app.post('/cry')
+async def dec(payload: dict = Body(...)):
+    msg = dict(payload)['data']    
+    
+    try:        
+        data = decrypt(msg)
+        print(data['user'])
+        return {            
+            "status" : "success",
+            "data" : encrypt("all good, we got your username : " + data['user'] + " and password : " + data['pass'])
+        }
+    except:
+        return {
+            "status" : "error"
+        }
